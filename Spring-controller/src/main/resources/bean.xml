@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd">
+    <!--开启注解-->
+    <context:annotation-config></context:annotation-config>
+    <!--指定扫描注解的路径-->
+    <context:component-scan base-package="com.xtkj">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <bean id="propertyConfigure"
+          class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:jdbc.properties</value>
+                <value>classpath:log4j.properties</value>
+            </list>
+        </property>
+    </bean>
+    <!-- 配置数据源 -->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="password" value="${password}"></property>
+        <property name="username" value="${user}"></property>
+        <property name="driverClassName" value="${driver}"></property>
+        <property name="url" value="${url}"></property>
+    </bean>
+    <bean id="sqlSessionFactory" class="com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <property name="mapperLocations" value="classpath:com/xtkj/mapper/*.xml" />
+        <property name="plugins">
+            <array>
+                <ref bean="mybatisPlusInterceptor"/>
+            </array>
+        </property>
+    </bean>
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.xtkj.dao"/>
+    </bean>
+    <!--    <bean id="orderService" class="com.mybatis.service.impl.OrderServiceImpl">-->
+    <!--        <property name="userMapper" ref="userMapper"/>-->
+    <!--        <property name="orderMasterMapper" ref="orderMasterMapper"/>-->
+    <!--        <property name="orderDetailMapper" ref="orderDetailMapper"/>-->
+    <!--        <property name="shopCartMapper" ref="shopCartMapper"/>-->
+    <!--    </bean>-->
+    <!--分页-->
+    <bean id="mybatisPlusInterceptor" class="com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor">
+        <property name="interceptors">
+            <list>
+                <ref bean="paginationInnerInterceptor"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="paginationInnerInterceptor" class="com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor">
+        <!-- 对于单一数据库类型来说,都建议配置该值,避免每次分页都去抓取数据库类型 -->
+        <constructor-arg name="dbType" value="H2"/>
+    </bean>
+
+    <!--配置事务-->
+<!--    <bean id="txContxt" class="com.mybatis.utils.TxContxt"/>-->
+
+    <!--    事务管理器-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <!-- 确定 AOP注解生效 -->
+<!--    <aop:aspectj-autoproxy></aop:aspectj-autoproxy>-->
+<!--    支持事务注解-->
+     <tx:annotation-driven transaction-manager="transactionManager"></tx:annotation-driven>
+    <!--    <tx:advice id="txAdvice"  transaction-manager="transactionManager" >-->
+    <!--      <tx:attributes>-->
+    <!--          <tx:method name="get*" read-only="true"/>-->
+    <!--          <tx:method name="*"/>-->
+    <!--      </tx:attributes>  -->
+    <!--    </tx:advice>-->
+
+    <!--通知-->
+    <!--    <aop:config>-->
+    <!--        <aop:pointcut id="txPoin" expression="execution(* com.mybatis.service.impl.*.*(..))"/>-->
+    <!--        <aop:advisor advice-ref="txAdvice" pointcut-ref="txPoin"/>-->
+    <!--        <aop:aspect id="s" ref="txContxt">-->
+    <!--            <aop:before method="before" pointcut-ref="txPoin"/>-->
+    <!--            <aop:after method="after" pointcut-ref="txPoin"/>-->
+    <!--            <aop:around method="around" pointcut-ref="txPoin"/>-->
+    <!--            <aop:after-throwing method="ex" throwing="e" pointcut-ref="txPoin"/>-->
+    <!--        </aop:aspect>-->
+    <!--    </aop:config>-->
+
+</beans>
+
